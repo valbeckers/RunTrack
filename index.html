@@ -45,7 +45,14 @@
 
     /* HOME */
     #screen-home .screen-scroll { flex: 1; overflow-y: auto; padding-bottom: calc(60px + env(safe-area-inset-bottom)); }
-    .home-header { padding: 16px 20px 20px; flex-shrink: 0; }
+    .home-header {
+      padding: calc(env(safe-area-inset-top) + 14px) 20px 16px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding-right: 64px; /* espace pour la roue */
+    }
     .home-header h1 { font-family: 'Bebas Neue', sans-serif; font-size: 42px; letter-spacing: 2px; color: var(--accent); line-height: 1; }
     .home-header p { color: var(--muted); font-size: 13px; margin-top: 4px; }
 
@@ -79,7 +86,12 @@
     /* RECORD SCREEN */
     .run-controls { padding: 12px 16px calc(60px + env(safe-area-inset-bottom)); flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
 
-    .mode-selector { display: flex; margin: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; flex-shrink: 0; }
+    .mode-selector {
+      display: flex;
+      margin: calc(env(safe-area-inset-top) + 14px) 16px 0;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; overflow: hidden; flex-shrink: 0;
+    }
     .mode-btn { flex: 1; padding: 12px 8px; border: none; background: transparent; color: var(--muted); font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 1.5px; cursor: pointer; transition: background .2s, color .2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
     .mode-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; flex-shrink: 0; }
     .mode-btn.active-run  { background: #1a1d0a; color: var(--accent); }
@@ -140,7 +152,10 @@
 
     /* HISTORY */
     #screen-history .screen-scroll { flex: 1; overflow-y: auto; padding-bottom: calc(60px + env(safe-area-inset-bottom)); }
-    .history-header { padding: 16px 20px 16px; flex-shrink: 0; }
+    .history-header {
+      padding: calc(env(safe-area-inset-top) + 14px) 64px 16px 20px;
+      flex-shrink: 0;
+    }
     .history-header h2 { font-family: 'Bebas Neue', sans-serif; font-size: 36px; letter-spacing: 2px; color: var(--accent); }
     .filter-tabs { display: flex; gap: 8px; padding: 0 16px 16px; }
     .filter-tab { padding: 7px 16px; border-radius: 20px; border: 1px solid var(--border); background: none; color: var(--muted); font-size: 12px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all .15s; }
@@ -210,6 +225,70 @@
 
     .leaflet-control-attribution { font-size: 8px !important; }
     .leaflet-container { background: #111 !important; }
+
+    /* ── SETTINGS GEAR ── */
+    .settings-gear {
+      position: fixed;
+      top: calc(env(safe-area-inset-top) + 14px);
+      right: 16px;
+      z-index: 150;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      width: 38px; height: 38px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: border-color .2s, transform .3s;
+    }
+    .settings-gear:active { transform: rotate(60deg); }
+    .settings-gear svg { width: 18px; height: 18px; stroke: var(--muted); fill: none; stroke-width: 1.8; }
+
+    /* ── SETTINGS MODAL ── */
+    #settings-modal .modal h3 { color: var(--text); }
+    .settings-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+    .settings-item:last-child { border-bottom: none; }
+    .settings-item:active { opacity: .6; }
+    .settings-item .si-icon {
+      width: 40px; height: 40px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+    .si-icon.export { background: #1a1d0a; }
+    .si-icon.import { background: #0a101a; }
+    .si-icon.update { background: #1a0f0a; }
+    .settings-item .si-text { flex: 1; }
+    .settings-item .si-title { font-size: 15px; font-weight: 500; margin-bottom: 2px; }
+    .settings-item .si-desc  { font-size: 12px; color: var(--muted); }
+    .settings-item .si-arrow { color: var(--muted); font-size: 18px; }
+
+    /* Import textarea */
+    .import-area {
+      width: 100%; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 12px; padding: 12px; color: var(--text);
+      font-family: 'DM Mono', monospace; font-size: 12px;
+      min-height: 120px; resize: vertical; margin-bottom: 12px;
+    }
+    .import-area:focus { outline: none; border-color: var(--accent); }
+    .import-hint { font-size: 11px; color: var(--muted); margin-bottom: 16px; }
+
+    /* Toast notification */
+    .notif-toast {
+      position: fixed; bottom: calc(72px + env(safe-area-inset-bottom) + 12px);
+      left: 16px; right: 16px; z-index: 400;
+      background: var(--surface); border: 1px solid var(--accent);
+      border-radius: 12px; padding: 12px 16px;
+      font-size: 13px; font-weight: 500; color: var(--accent);
+      transform: translateY(40px); opacity: 0;
+      transition: transform .3s, opacity .3s;
+      pointer-events: none; text-align: center;
+    }
+    .notif-toast.show { transform: translateY(0); opacity: 1; }
   </style>
 </head>
 <body>
@@ -363,6 +442,58 @@
     <div class="totals-bar" id="totals-bar"></div>
     <div class="section-title">ACTIVITÉS</div>
     <div class="history-list" id="history-list"></div>
+  </div>
+</div>
+
+<!-- ════════════════ GEAR BUTTON (fixe, tous onglets) ════════════════ -->
+<button class="settings-gear" onclick="openSettings()" aria-label="Réglages">
+  <svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+</button>
+
+<!-- ════════════════ NOTIF TOAST ════════════════ -->
+<div class="notif-toast" id="notif-toast"></div>
+
+<!-- ════════════════ SETTINGS MODAL ════════════════ -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal">
+    <h3>RÉGLAGES</h3>
+    <div class="settings-item" onclick="exportData()">
+      <div class="si-icon export">📤</div>
+      <div class="si-text">
+        <div class="si-title">Exporter mes données</div>
+        <div class="si-desc">Copie l'historique dans le presse-papier</div>
+      </div>
+      <div class="si-arrow">›</div>
+    </div>
+    <div class="settings-item" onclick="openImport()">
+      <div class="si-icon import">📥</div>
+      <div class="si-text">
+        <div class="si-title">Importer des données</div>
+        <div class="si-desc">Restaure un historique exporté</div>
+      </div>
+      <div class="si-arrow">›</div>
+    </div>
+    <div class="settings-item" onclick="forceUpdate()">
+      <div class="si-icon update">🔄</div>
+      <div class="si-text">
+        <div class="si-title">Forcer la mise à jour</div>
+        <div class="si-desc">Vide le cache et recharge l'app</div>
+      </div>
+      <div class="si-arrow">›</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ IMPORT MODAL ════════════════ -->
+<div class="modal-overlay" id="import-modal">
+  <div class="modal">
+    <h3>IMPORTER</h3>
+    <p class="import-hint">Colle ici le texte exporté précédemment depuis RunTrack.</p>
+    <textarea class="import-area" id="import-textarea" placeholder='Colle ton export ici…'></textarea>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeModal('import-modal')">ANNULER</button>
+      <button class="btn-modal-ok" onclick="doImport()">IMPORTER</button>
+    </div>
   </div>
 </div>
 
@@ -858,6 +989,82 @@ function calcPaceValue(distM,ms) { if (distM<50) return null; return (ms/1000/60
 function paceStr(v) { const m=Math.floor(v),s=Math.round((v-m)*60); return `${m}:${pad(s)}`; }
 function formatDate(iso) { return new Date(iso).toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'}); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ─────────────────────────────── SETTINGS ─────────────────────────────
+function openSettings() {
+  document.getElementById('settings-modal').classList.add('open');
+}
+
+function exportData() {
+  const runs = getRuns();
+  if (!runs.length) { showNotif('⚠️ Aucune donnée à exporter'); return; }
+  const payload = JSON.stringify({ version: 1, exported: new Date().toISOString(), runs });
+  navigator.clipboard.writeText(payload).then(() => {
+    closeModal('settings-modal');
+    showNotif(`✅ ${runs.length} course(s) copiée(s) dans le presse-papier`);
+  }).catch(() => {
+    // Fallback : affiche dans une alert
+    prompt('Copie ce texte manuellement :', payload);
+  });
+}
+
+function openImport() {
+  document.getElementById('import-textarea').value = '';
+  closeModal('settings-modal');
+  document.getElementById('import-modal').classList.add('open');
+}
+
+function doImport() {
+  const raw = document.getElementById('import-textarea').value.trim();
+  if (!raw) { showNotif('⚠️ Rien à importer'); return; }
+  try {
+    const data = JSON.parse(raw);
+    // Accepte soit le format enveloppé { version, runs } soit un tableau direct
+    const incoming = Array.isArray(data) ? data : (data.runs || []);
+    if (!incoming.length) { showNotif('⚠️ Aucune course trouvée dans ce texte'); return; }
+    const existing = getRuns();
+    // Fusionne sans doublons (même date + distance)
+    const merged = [...incoming];
+    existing.forEach(r => {
+      const dup = merged.find(m => m.date === r.date && m.distance === r.distance);
+      if (!dup) merged.push(r);
+    });
+    merged.sort((a,b) => new Date(b.date) - new Date(a.date));
+    localStorage.setItem('runtrack_runs', JSON.stringify(merged));
+    closeModal('import-modal');
+    showNotif(`✅ ${incoming.length} course(s) importée(s)`);
+    refreshHome();
+    refreshHistory();
+  } catch(e) {
+    showNotif('❌ Format invalide — vérifie le texte collé');
+  }
+}
+
+function forceUpdate() {
+  closeModal('settings-modal');
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      Promise.all(regs.map(r => r.unregister())).then(() => {
+        // Vide tous les caches
+        caches.keys().then(keys => {
+          Promise.all(keys.map(k => caches.delete(k))).then(() => {
+            showNotif('🔄 Cache vidé — rechargement…');
+            setTimeout(() => location.reload(true), 1200);
+          });
+        });
+      });
+    });
+  } else {
+    location.reload(true);
+  }
+}
+
+function showNotif(msg) {
+  const t = document.getElementById('notif-toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
 
 // ─────────────────────────────── INIT ─────────────────────────────────
 setMode('run');
