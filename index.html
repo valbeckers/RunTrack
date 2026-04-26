@@ -1088,6 +1088,40 @@ refreshHome();
 const h=new Date().getHours();
 document.getElementById('home-greeting').textContent = h<12?'Bonne matinée !':h<18?'Bon après-midi !':'Bonne soirée !';
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+
+// ─── SAFE AREA FIX — lit la valeur réelle via JS et l'applique en dur ───
+(function applySafeArea() {
+  // Crée un élément test pour lire env(safe-area-inset-bottom)
+  const probe = document.createElement('div');
+  probe.style.cssText = [
+    'position:fixed', 'bottom:0', 'left:0',
+    'width:1px', 'height:env(safe-area-inset-bottom,0px)',
+    'pointer-events:none', 'visibility:hidden'
+  ].join(';');
+  document.body.appendChild(probe);
+
+  // Attend que le layout soit calculé
+  requestAnimationFrame(() => {
+    const safeBottom = probe.getBoundingClientRect().height;
+    document.body.removeChild(probe);
+
+    const nav = document.querySelector('.bottom-nav');
+    const NAV_CONTENT = 60; // hauteur des icônes
+
+    if (safeBottom > 0) {
+      // Applique directement en style inline — écrase tout CSS
+      nav.style.height = (NAV_CONTENT + safeBottom) + 'px';
+      nav.style.paddingBottom = safeBottom + 'px';
+      nav.style.alignItems = 'center';
+
+      // Compense dans les zones scrollables
+      const scrollAreas = document.querySelectorAll('.screen-scroll, .run-controls');
+      scrollAreas.forEach(el => {
+        el.style.paddingBottom = (NAV_CONTENT + safeBottom) + 'px';
+      });
+    }
+  });
+})();
 </script>
 </body>
 </html>
