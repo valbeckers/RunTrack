@@ -35,25 +35,25 @@
     .screen { display: none; flex-direction: column; height: 100dvh; overflow: hidden; }
     .screen.active { display: flex; }
 
-    /* NAV — iPhone 11 standalone : safe area = 34px mesurée */
+    /* NAV — 34px dans la safe area uniquement, icônes centrées */
     .bottom-nav {
       position: fixed;
       bottom: 0; left: 0; right: 0;
-      height: 94px; /* 60px icônes + 34px safe area */
+      height: 34px;
       background: var(--surface);
       border-top: 1px solid var(--border);
       display: flex;
-      align-items: flex-start; /* icônes en haut, 34px vides en bas = home indicator */
-      padding-top: 10px;
+      align-items: center;
+      justify-content: space-around;
       z-index: 100;
     }
-    .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 0; background: none; border: none; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 10px; font-weight: 500; cursor: pointer; transition: color .15s; }
+    .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 0; background: none; border: none; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 8px; font-weight: 500; cursor: pointer; transition: color .15s; }
     .nav-btn.active { color: var(--accent); }
     .nav-btn.hike-active { color: var(--hike); }
     .nav-btn svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; }
 
     /* HOME */
-    #screen-home .screen-scroll { flex: 1; overflow-y: auto; padding-bottom: 94px; }
+    #screen-home .screen-scroll { flex: 1; overflow-y: auto; padding-bottom: 34px; }
 
     /* Header unifié — même style sur les 3 onglets */
     .app-header {
@@ -98,7 +98,7 @@
     .empty-state .big { font-family: 'Bebas Neue', sans-serif; font-size: 48px; color: var(--border); letter-spacing: 2px; }
 
     /* RECORD SCREEN */
-    .run-controls { padding: 12px 16px 94px; flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+    .run-controls { padding: 12px 16px 34px; flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
 
     .mode-selector {
       display: flex;
@@ -165,7 +165,7 @@
     .obj-setup-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; color: var(--accent); font-size: 13px; font-weight: 500; cursor: pointer; margin-bottom: 10px; width: 100%; text-align: left; font-family: 'DM Sans', sans-serif; display: flex; align-items: center; gap: 8px; }
 
     /* HISTORY */
-    #screen-history .screen-scroll { flex: 1; overflow-y: auto; padding-bottom: 94px; }
+    #screen-history .screen-scroll { flex: 1; overflow-y: auto; padding-bottom: 34px; }
     .filter-tabs { display: flex; gap: 8px; padding: 0 16px 16px; }
     .filter-tab { padding: 7px 16px; border-radius: 20px; border: 1px solid var(--border); background: none; color: var(--muted); font-size: 12px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all .15s; }
     .filter-tab.active-all  { border-color: var(--text);  color: var(--text); }
