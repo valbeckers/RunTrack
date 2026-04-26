@@ -3,7 +3,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="RunTrack" />
@@ -36,17 +36,26 @@
     .screen { display: none; flex-direction: column; height: 100dvh; overflow: hidden; }
     .screen.active { display: flex; }
 
-    /* NAV — remplit visuellement toute la zone jusqu'au bas de l'écran */
+    /* NAV — le fond s'étend visuellement dans la safe area via ::after */
     .bottom-nav {
       position: fixed; bottom: 0; left: 0; right: 0;
-      padding-top: 8px;
-      padding-bottom: env(safe-area-inset-bottom);
+      height: 60px;
       background: var(--surface);
       border-top: 1px solid var(--border);
       display: flex;
+      align-items: center;
       z-index: 100;
     }
-    .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 2px 0 8px; background: none; border: none; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 10px; font-weight: 500; cursor: pointer; transition: color .15s; }
+    /* Pseudo-élément qui descend derrière la safe area — toujours visible */
+    .bottom-nav::after {
+      content: '';
+      position: absolute;
+      bottom: -100px; /* large pour couvrir n'importe quelle safe area */
+      left: 0; right: 0;
+      height: 100px;
+      background: var(--surface);
+    }
+    .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 0; background: none; border: none; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 10px; font-weight: 500; cursor: pointer; transition: color .15s; position: relative; z-index: 1; }
     .nav-btn.active { color: var(--accent); }
     .nav-btn.hike-active { color: var(--hike); }
     .nav-btn svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; }
