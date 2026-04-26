@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -8,69 +9,52 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: #111; color: white; font-family: sans-serif; }
-
-    /* Test 1 : nav simple avec env() */
-    .nav {
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      background: #e8ff47;
-      color: black;
-      display: flex;
-      align-items: center;
-      height: calc(60px + env(safe-area-inset-bottom));
-      padding-bottom: env(safe-area-inset-bottom);
-    }
-    .nav span {
-      flex: 1;
-      text-align: center;
-      font-size: 13px;
-      font-weight: bold;
-    }
-
-    /* Debug info */
-    .info {
-      position: fixed;
-      top: 60px; left: 0; right: 0;
-      background: rgba(255,255,255,0.1);
-      padding: 16px;
-      font-size: 13px;
-      line-height: 1.8;
-    }
+    .info { position: fixed; top: 60px; left: 0; right: 0; background: rgba(255,255,255,0.1); padding: 16px; font-size: 13px; line-height: 2; }
+    .nav { position: fixed; bottom: 0; left: 0; right: 0; background: #e8ff47; color: black; display: flex; align-items: center; height: 60px; }
+    .nav span { flex: 1; text-align: center; font-size: 13px; font-weight: bold; }
   </style>
 </head>
 <body>
-
-<div class="info" id="info">Calcul en cours...</div>
-
-<nav class="nav">
-  <span>🏠 Accueil</span>
-  <span>⏺ Record</span>
-  <span>📅 Historique</span>
+<div class="info" id="info">Calcul...</div>
+<nav class="nav" id="nav">
+  <span>🏠</span><span>⏺</span><span>📅</span>
 </nav>
-
 <script>
-const info = document.getElementById('info');
-
-// Probe pour lire env(safe-area-inset-bottom)
-const probe = document.createElement('div');
-probe.style.cssText = 'position:fixed;bottom:0;left:0;width:1px;height:env(safe-area-inset-bottom,0px);pointer-events:none;';
-document.body.appendChild(probe);
-
 requestAnimationFrame(() => {
-  const safeBottom = probe.getBoundingClientRect().height;
-  const winH = window.innerHeight;
-  const screenH = screen.height;
-  const nav = document.querySelector('.nav');
+  const probe = document.createElement('div');
+  probe.style.cssText = 'position:fixed;bottom:0;left:0;width:1px;height:env(safe-area-inset-bottom,0px);pointer-events:none;';
+  document.body.appendChild(probe);
+  const envVal = probe.getBoundingClientRect().height;
+  document.body.removeChild(probe);
+
+  const vv = window.visualViewport;
+  const vvDiff = vv ? (window.innerHeight - vv.height) : 'N/A';
+  const screenDiff = screen.height - window.innerHeight;
+  const nav = document.getElementById('nav');
   const navRect = nav.getBoundingClientRect();
 
-  info.innerHTML = `
-    <b>safe-area-inset-bottom (probe):</b> ${safeBottom}px<br>
-    <b>window.innerHeight:</b> ${winH}px<br>
-    <b>screen.height:</b> ${screenH}px<br>
-    <b>nav height (getBoundingClientRect):</b> ${navRect.height.toFixed(1)}px<br>
-    <b>nav bottom:</b> ${navRect.bottom.toFixed(1)}px<br>
-    <b>standalone mode:</b> ${window.navigator.standalone ? 'OUI ✅' : 'NON ❌'}<br>
-    <b>CSS env() support:</b> ${CSS.supports('padding-bottom', 'env(safe-area-inset-bottom)') ? 'OUI ✅' : 'NON ❌'}
+  // Détecte iPhone avec home bar
+  const isHomeBar = /iPhone/.test(navigator.userAgent) && screen.height >= 812;
+  const safeGuess = isHomeBar ? 34 : 0;
+
+  // Applique le fix JS
+  const safe = envVal > 0 ? envVal : safeGuess;
+  if (safe > 0) {
+    nav.style.height = (60 + safe) + 'px';
+    nav.style.paddingBottom = safe + 'px';
+    nav.style.alignItems = 'center';
+  }
+
+  document.getElementById('info').innerHTML = `
+    <b>env() probe:</b> ${envVal}px<br>
+    <b>screen.height:</b> ${screen.height}px<br>
+    <b>window.innerHeight:</b> ${window.innerHeight}px<br>
+    <b>screen - inner:</b> ${screenDiff}px<br>
+    <b>visualViewport diff:</b> ${vvDiff}px<br>
+    <b>standalone:</b> ${navigator.standalone ? 'OUI ✅' : 'NON ❌'}<br>
+    <b>isHomeBar device:</b> ${isHomeBar ? 'OUI ✅' : 'NON ❌'}<br>
+    <b>safe appliqué:</b> ${safe}px<br>
+    <b>nav.height après fix:</b> ${nav.getBoundingClientRect().height.toFixed(1)}px
   `;
 });
 </script>
