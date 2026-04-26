@@ -163,7 +163,35 @@
 
     .obj-setup-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; color: var(--accent); font-size: 13px; font-weight: 500; cursor: pointer; margin-bottom: 10px; width: 100%; text-align: left; font-family: 'DM Sans', sans-serif; display: flex; align-items: center; gap: 8px; }
 
-    /* HISTORY */
+    /* WEEK NAVIGATION */
+    .week-nav { display: flex; align-items: center; justify-content: space-between; padding: 0 16px 12px; gap: 8px; }
+    .week-nav-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; color: var(--text); width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; flex-shrink: 0; transition: opacity .15s; }
+    .week-nav-btn:active { opacity: .5; }
+    .week-nav-btn:disabled { opacity: .2; cursor: default; }
+    .week-label { flex: 1; text-align: center; }
+    .week-label .wl-title { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 1px; color: var(--text); }
+    .week-label .wl-dates { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+    /* CONFIRM DELETE MODAL */
+    #confirm-modal .modal h3 { color: var(--red); }
+    .confirm-text { font-size: 14px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+    .confirm-text strong { color: var(--text); }
+
+    /* SETTINGS — close button + backdrop click */
+    .modal-overlay { cursor: pointer; }
+    .modal { cursor: default; }
+    .settings-close {
+      position: absolute; top: 20px; right: 20px;
+      background: var(--border); border: none; border-radius: 50%;
+      width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--text); font-size: 20px; line-height: 1;
+      transition: background .15s;
+    }
+    .settings-close:active { background: var(--muted); }
+    #settings-modal .modal { position: relative; }
+
+    /* Mode selector — double gap avant la carte */
+    .mode-selector { margin-bottom: 16px !important; }
     #screen-history .screen-scroll { flex: 1; overflow-y: auto; padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
     .filter-tabs { display: flex; gap: 8px; padding: 0 16px 16px; }
     .filter-tab { padding: 7px 16px; border-radius: 20px; border: 1px solid var(--border); background: none; color: var(--muted); font-size: 12px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all .15s; }
@@ -447,13 +475,15 @@
     <h1>HISTORIQUE</h1>
   </div>
   <div class="screen-scroll">
-    <div class="filter-tabs">
-      <button class="filter-tab active-all" id="ft-all"  onclick="setFilter('all')">Tout</button>
-      <button class="filter-tab" id="ft-run"              onclick="setFilter('run')">🏃 Course</button>
-      <button class="filter-tab" id="ft-hike"             onclick="setFilter('hike')">🥾 Rando</button>
-    </div>
     <div class="totals-bar" id="totals-bar"></div>
-    <div class="section-title">ACTIVITÉS</div>
+    <div class="week-nav">
+      <button class="week-nav-btn" id="week-prev" onclick="changeWeek(-1)">‹</button>
+      <div class="week-label">
+        <div class="wl-title" id="week-title">CETTE SEMAINE</div>
+        <div class="wl-dates" id="week-dates"></div>
+      </div>
+      <button class="week-nav-btn" id="week-next" onclick="changeWeek(1)">›</button>
+    </div>
     <div class="history-list" id="history-list"></div>
   </div>
 </div>
@@ -467,8 +497,9 @@
 <div class="notif-toast" id="notif-toast"></div>
 
 <!-- ════════════════ SETTINGS MODAL ════════════════ -->
-<div class="modal-overlay" id="settings-modal">
+<div class="modal-overlay" id="settings-modal" onclick="handleSettingsBackdrop(event)">
   <div class="modal">
+    <button class="settings-close" onclick="closeModal('settings-modal')">✕</button>
     <h3>RÉGLAGES</h3>
     <div class="settings-item" onclick="exportData()">
       <div class="si-icon export">📤</div>
@@ -506,6 +537,18 @@
     <div class="modal-actions">
       <button class="btn-modal-cancel" onclick="closeModal('import-modal')">ANNULER</button>
       <button class="btn-modal-ok" onclick="doImport()">IMPORTER</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ CONFIRM DELETE MODAL ════════════════ -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal">
+    <h3>SUPPRIMER ?</h3>
+    <p class="confirm-text" id="confirm-text">Cette activité sera définitivement supprimée.</p>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeModal('confirm-modal')">ANNULER</button>
+      <button class="btn-modal-ok" style="background:var(--red)" id="confirm-ok-btn">SUPPRIMER</button>
     </div>
   </div>
 </div>
@@ -938,26 +981,75 @@ function refreshHome() {
 }
 
 // ─────────────────────────────── HISTORY ──────────────────────────────
-function setFilter(f) {
-  histFilter = f;
-  ['all','run','hike'].forEach(t => {
-    document.getElementById('ft-' + t).className = 'filter-tab' + (f===t ? (' active-' + t) : '');
-  });
+// ─────────────────────────────── HISTORY ──────────────────────────────
+let currentWeekOffset = 0; // 0 = cette semaine, -1 = semaine précédente, etc.
+
+function getWeekBounds(offset) {
+  const now = new Date();
+  const dayOfWeek = now.getDay() === 0 ? 6 : now.getDay() - 1; // lundi=0
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - dayOfWeek + offset * 7);
+  monday.setHours(0, 0, 0, 0);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  sunday.setHours(23, 59, 59, 999);
+  return { monday, sunday };
+}
+
+function formatShortDate(d) {
+  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+}
+
+function changeWeek(dir) {
+  const newOffset = currentWeekOffset + dir;
+  if (newOffset > 0) return; // pas dans le futur
+  if (newOffset < -51) return; // max 52 semaines
+  currentWeekOffset = newOffset;
   refreshHistory();
 }
+
 function refreshHistory() {
   const all = getRuns();
-  const runs = histFilter==='all' ? all : all.filter(r => r.mode===histFilter);
-  let td=0, tt=0; runs.forEach(r => { td += r.distance; tt += r.duration; });
+  const { monday, sunday } = getWeekBounds(currentWeekOffset);
+
+  // Titre de la semaine
+  const titleEl  = document.getElementById('week-title');
+  const datesEl  = document.getElementById('week-dates');
+  const prevBtn  = document.getElementById('week-prev');
+  const nextBtn  = document.getElementById('week-next');
+
+  if (currentWeekOffset === 0) {
+    titleEl.textContent = 'CETTE SEMAINE';
+  } else if (currentWeekOffset === -1) {
+    titleEl.textContent = 'SEMAINE DERNIÈRE';
+  } else {
+    // Numéro de semaine ISO
+    const weekNum = getISOWeek(monday);
+    titleEl.textContent = `SEMAINE ${weekNum}`;
+  }
+  datesEl.textContent = `${formatShortDate(monday)} – ${formatShortDate(sunday)}`;
+  prevBtn.disabled = currentWeekOffset <= -51;
+  nextBtn.disabled = currentWeekOffset >= 0;
+
+  // Filtrer les runs de cette semaine
+  const runs = all.map((r, i) => ({ ...r, _i: i }))
+    .filter(r => { const d = new Date(r.date); return d >= monday && d <= sunday; });
+
+  // Totaux
+  let td = 0, tt = 0;
+  runs.forEach(r => { td += r.distance; tt += r.duration; });
   document.getElementById('totals-bar').innerHTML = `
-    <div class="total-pill"><div class="tp-label">Total km</div><div class="tp-val">${(td/1000).toFixed(1)}</div></div>
+    <div class="total-pill"><div class="tp-label">Km semaine</div><div class="tp-val">${(td/1000).toFixed(1)}</div></div>
     <div class="total-pill"><div class="tp-label">Sorties</div><div class="tp-val">${runs.length}</div></div>
     <div class="total-pill"><div class="tp-label">Temps total</div><div class="tp-val">${formatTime(tt)}</div></div>`;
+
   const list = document.getElementById('history-list');
-  if (!runs.length) { list.innerHTML = `<div class="empty-state"><div class="big">0 KM</div><p>Aucune activité.</p></div>`; return; }
-  list.innerHTML = all.map((r, i) => {
-    if (histFilter !== 'all' && r.mode !== histFilter) return '';
-    const km = (r.distance/1000).toFixed(2);
+  if (!runs.length) {
+    list.innerHTML = `<div class="empty-state"><div class="big">0 KM</div><p>Aucune activité cette semaine.</p></div>`;
+    return;
+  }
+  list.innerHTML = runs.map(r => {
+    const km   = (r.distance/1000).toFixed(2);
     const pace = r.mode==='run' && r.pace ? paceStr(r.pace) : null;
     const icon = r.mode==='hike' ? '🥾' : '🏃';
     const details = [
@@ -972,16 +1064,44 @@ function refreshHistory() {
           <div class="h-mode ${r.mode}">${icon} ${r.mode==='hike'?'Randonnée':'Course'}</div>
           <div class="h-dist">${km} km</div>
         </div>
-        <button class="h-del" onclick="deleteRun(${i})">✕</button>
+        <button class="h-del" onclick="confirmDelete(${r._i})">✕</button>
       </div>
       <div class="history-run-details">${details}</div>
     </div>`;
   }).join('');
 }
+
+function getISOWeek(d) {
+  const date = new Date(d);
+  date.setHours(0,0,0,0);
+  date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+  const week1 = new Date(date.getFullYear(), 0, 4);
+  return 1 + Math.round(((date - week1) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+}
+
+function confirmDelete(i) {
+  const runs = getRuns();
+  const r = runs[i];
+  const km = (r.distance/1000).toFixed(2);
+  document.getElementById('confirm-text').innerHTML =
+    `Supprimer <strong>${km} km</strong> du <strong>${formatDate(r.date)}</strong> ?<br>Cette action est irréversible.`;
+  document.getElementById('confirm-ok-btn').onclick = () => deleteRun(i);
+  document.getElementById('confirm-modal').classList.add('open');
+}
+
 function deleteRun(i) {
-  const runs = getRuns(); runs.splice(i,1);
+  const runs = getRuns();
+  runs.splice(i, 1);
   localStorage.setItem('runtrack_runs', JSON.stringify(runs));
-  refreshHistory(); refreshHome();
+  closeModal('confirm-modal');
+  refreshHistory();
+  refreshHome();
+}
+
+function handleSettingsBackdrop(e) {
+  if (e.target === document.getElementById('settings-modal')) {
+    closeModal('settings-modal');
+  }
 }
 
 // ─────────────────────────────── UTILS ────────────────────────────────
