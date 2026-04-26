@@ -1089,34 +1089,45 @@ const h=new Date().getHours();
 document.getElementById('home-greeting').textContent = h<12?'Bonne matinée !':h<18?'Bon après-midi !':'Bonne soirée !';
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
 
-// ─── SAFE AREA FIX — lit la valeur réelle via JS et l'applique en dur ───
+// ─── SAFE AREA FIX — mesure la vraie safe area via screen vs viewport ───
 (function applySafeArea() {
-  // Crée un élément test pour lire env(safe-area-inset-bottom)
-  const probe = document.createElement('div');
-  probe.style.cssText = [
-    'position:fixed', 'bottom:0', 'left:0',
-    'width:1px', 'height:env(safe-area-inset-bottom,0px)',
-    'pointer-events:none', 'visibility:hidden'
-  ].join(';');
-  document.body.appendChild(probe);
-
-  // Attend que le layout soit calculé
   requestAnimationFrame(() => {
-    const safeBottom = probe.getBoundingClientRect().height;
+    // Sur iPhone avec home indicator, screen.height > window.innerHeight
+    // La différence = status bar (top) + safe area (bottom)
+    // En mode PWA standalone, window.innerHeight exclut la safe area bottom
+    const nav = document.querySelector('.bottom-nav');
+    const NAV_CONTENT = 60;
+
+    // Méthode 1 : probe CSS
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:fixed;bottom:0;left:0;width:1px;height:env(safe-area-inset-bottom,0px);pointer-events:none;visibility:hidden;';
+    document.body.appendChild(probe);
+    let safeBottom = probe.getBoundingClientRect().height;
     document.body.removeChild(probe);
 
-    const nav = document.querySelector('.bottom-nav');
-    const NAV_CONTENT = 60; // hauteur des icônes
+    // Méthode 2 : si env() = 0, on estime via visualViewport
+    if (safeBottom === 0 && window.visualViewport) {
+      const vv = window.visualViewport;
+      safeBottom = window.innerHeight - vv.height - vv.offsetTop;
+      if (safeBottom < 0) safeBottom = 0;
+    }
+
+    // Méthode 3 : fallback hardcodé iPhone home indicator = 34px
+    // si on détecte qu'on est sur iPhone avec home indicator
+    if (safeBottom === 0) {
+      const ratio = window.devicePixelRatio || 1;
+      const isIphoneWithHomeBar = (
+        /iPhone/.test(navigator.userAgent) &&
+        screen.height >= 812 // iPhone X et plus récent (avec home indicator)
+      );
+      if (isIphoneWithHomeBar) safeBottom = 34;
+    }
 
     if (safeBottom > 0) {
-      // Applique directement en style inline — écrase tout CSS
       nav.style.height = (NAV_CONTENT + safeBottom) + 'px';
       nav.style.paddingBottom = safeBottom + 'px';
       nav.style.alignItems = 'center';
-
-      // Compense dans les zones scrollables
-      const scrollAreas = document.querySelectorAll('.screen-scroll, .run-controls');
-      scrollAreas.forEach(el => {
+      document.querySelectorAll('.screen-scroll, .run-controls').forEach(el => {
         el.style.paddingBottom = (NAV_CONTENT + safeBottom) + 'px';
       });
     }
