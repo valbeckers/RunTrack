@@ -36,25 +36,39 @@
     .screen { display: none; flex-direction: column; height: 100dvh; overflow: hidden; }
     .screen.active { display: flex; }
 
-    /* NAV — fixed en bas, padding-bottom = safe area (pas margin) */
-    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; padding-bottom: env(safe-area-inset-bottom); background: var(--surface); border-top: 1px solid var(--border); display: flex; z-index: 100; flex-shrink: 0; }
+    /* NAV — fixed en bas, s'étend dans la safe area */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      height: calc(72px + env(safe-area-inset-bottom));
+      padding-bottom: env(safe-area-inset-bottom);
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      z-index: 100;
+      align-items: flex-start; /* boutons collés en haut, safe area en bas */
+    }
     .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 0 8px; background: none; border: none; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 10px; font-weight: 500; cursor: pointer; transition: color .15s; }
     .nav-btn.active { color: var(--accent); }
     .nav-btn.hike-active { color: var(--hike); }
     .nav-btn svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; }
 
     /* HOME */
-    #screen-home .screen-scroll { flex: 1; overflow-y: auto; padding-bottom: calc(60px + env(safe-area-inset-bottom)); }
-    .home-header {
-      padding: calc(env(safe-area-inset-top) + 14px) 20px 16px;
+    #screen-home .screen-scroll { flex: 1; overflow-y: auto; padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+
+    /* Header unifié — même style sur les 3 onglets */
+    .app-header {
+      padding: calc(env(safe-area-inset-top) + 14px) 64px 16px 20px;
       flex-shrink: 0;
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      padding-right: 64px; /* espace pour la roue */
     }
-    .home-header h1 { font-family: 'Bebas Neue', sans-serif; font-size: 42px; letter-spacing: 2px; color: var(--accent); line-height: 1; }
-    .home-header p { color: var(--muted); font-size: 13px; margin-top: 4px; }
+    .app-header h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 42px;
+      letter-spacing: 2px;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .app-header h1.hike-color { color: var(--hike); }
+    .app-header p { color: var(--muted); font-size: 13px; margin-top: 4px; }
 
     .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 16px 20px; }
     .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; }
@@ -84,11 +98,11 @@
     .empty-state .big { font-family: 'Bebas Neue', sans-serif; font-size: 48px; color: var(--border); letter-spacing: 2px; }
 
     /* RECORD SCREEN */
-    .run-controls { padding: 12px 16px calc(60px + env(safe-area-inset-bottom)); flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+    .run-controls { padding: 12px 16px calc(72px + env(safe-area-inset-bottom)); flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
 
     .mode-selector {
       display: flex;
-      margin: calc(env(safe-area-inset-top) + 14px) 16px 0;
+      margin: 0 16px 0;
       background: var(--surface); border: 1px solid var(--border);
       border-radius: 14px; overflow: hidden; flex-shrink: 0;
     }
@@ -151,12 +165,7 @@
     .obj-setup-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; color: var(--accent); font-size: 13px; font-weight: 500; cursor: pointer; margin-bottom: 10px; width: 100%; text-align: left; font-family: 'DM Sans', sans-serif; display: flex; align-items: center; gap: 8px; }
 
     /* HISTORY */
-    #screen-history .screen-scroll { flex: 1; overflow-y: auto; padding-bottom: calc(60px + env(safe-area-inset-bottom)); }
-    .history-header {
-      padding: calc(env(safe-area-inset-top) + 14px) 64px 16px 20px;
-      flex-shrink: 0;
-    }
-    .history-header h2 { font-family: 'Bebas Neue', sans-serif; font-size: 36px; letter-spacing: 2px; color: var(--accent); }
+    #screen-history .screen-scroll { flex: 1; overflow-y: auto; padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
     .filter-tabs { display: flex; gap: 8px; padding: 0 16px 16px; }
     .filter-tab { padding: 7px 16px; border-radius: 20px; border: 1px solid var(--border); background: none; color: var(--muted); font-size: 12px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all .15s; }
     .filter-tab.active-all  { border-color: var(--text);  color: var(--text); }
@@ -304,7 +313,7 @@
 
 <!-- ════════════════ HOME ════════════════ -->
 <div id="screen-home" class="screen active">
-  <div class="home-header">
+  <div class="app-header">
     <h1>RUNTRACK</h1>
     <p id="home-greeting">Prêt à bouger ?</p>
   </div>
@@ -343,6 +352,9 @@
 
 <!-- ════════════════ RECORD ════════════════ -->
 <div id="screen-record" class="screen">
+  <div class="app-header">
+    <h1 id="record-title">NOUVELLE ACTIVITÉ</h1>
+  </div>
   <div class="mode-selector">
     <button class="mode-btn" id="mode-run-btn" onclick="setMode('run')">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><path d="M7 22l2-8 3 3 2-6 4 4"/><path d="M6 12l2-4 3 2 2-3"/></svg>
@@ -432,7 +444,9 @@
 
 <!-- ════════════════ HISTORY ════════════════ -->
 <div id="screen-history" class="screen">
-  <div class="history-header"><h2>STATISTIQUES</h2></div>
+  <div class="app-header">
+    <h1>HISTORIQUE</h1>
+  </div>
   <div class="screen-scroll">
     <div class="filter-tabs">
       <button class="filter-tab active-all" id="ft-all"  onclick="setFilter('all')">Tout</button>
