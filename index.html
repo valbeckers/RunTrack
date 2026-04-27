@@ -433,8 +433,8 @@
         <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
       </div>
 
-      <!-- Metrics -->
-      <div class="metrics-row">
+      <!-- Metrics — Distance + Allure uniquement -->
+      <div class="metrics-row" style="grid-template-columns: 1fr 1fr;">
         <div class="metric" id="m-dist">
           <div class="m-label">Distance</div>
           <div class="m-val" id="metric-dist">0.00</div>
@@ -444,11 +444,6 @@
           <div class="m-label">Allure</div>
           <div class="m-val" id="metric-pace">--:--</div>
           <div class="m-unit">min/km</div>
-        </div>
-        <div class="metric" id="m-speed">
-          <div class="m-label">Vitesse</div>
-          <div class="m-val" id="metric-speed">0.0</div>
-          <div class="m-unit">km/h</div>
         </div>
       </div>
 
@@ -563,6 +558,17 @@
   </div>
 </div>
 
+<!-- WAKE LOCK WARNING — affiché si l'écran risque de se verrouiller -->
+<div id="wakelock-warning" style="display:none;position:fixed;top:70px;left:16px;right:16px;z-index:300;
+  background:#1a100a;border:1px solid var(--accent2);border-radius:14px;
+  padding:12px 14px;gap:10px;align-items:center;">
+  <span style="font-size:20px;flex-shrink:0">⚠️</span>
+  <div>
+    <div style="font-size:13px;font-weight:500;color:var(--accent2)">Écran non maintenu allumé</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:2px">Si l'écran se verrouille, l'enregistrement s'arrêtera. Désactive la mise en veille dans Réglages iOS.</div>
+  </div>
+</div>
+
 <!-- ════════════════ BOTTOM NAV ════════════════ -->
 <nav class="bottom-nav">
   <button class="nav-btn active" id="nav-home" onclick="showScreen('home')">
@@ -665,6 +671,7 @@ let startTime = 0, pausedElapsed = 0, pauseStart = 0;
 let totalDistance = 0, lastPos = null, currentSpeed = 0;
 let elevGain = 0, lastAlt = null;
 let activeMode = 'run';
+let wakeLock = null; // Wake Lock API pour garder l'écran allumé
 
 // Objectives
 let obj = { pace:false, paceTarget:null, paceTol:20, dist:false, distTarget:null, time:false, timeTarget:null };
@@ -731,8 +738,6 @@ function onGPS(pos) {
   const { latitude:lat, longitude:lng, accuracy, speed, altitude } = pos.coords;
   setGpsStatus('good', `GPS ±${Math.round(accuracy)}m`);
   updateMap(lat, lng);
-  if (speed && speed > 0) currentSpeed = speed * 3.6;
-  document.getElementById('metric-speed').textContent = currentSpeed.toFixed(1);
   if (altitude !== null) {
     document.getElementById('metric-alt').textContent = Math.round(altitude);
     if (lastAlt !== null && isRunning && !isPaused && altitude - lastAlt > 0.5) elevGain += altitude - lastAlt;
@@ -763,7 +768,10 @@ function startRun() {
   startGPS(); renderBtns();
   document.getElementById('obj-setup-btn').style.display = 'none';
   document.getElementById('obj-bar').style.display = (activeMode==='run' && hasObj()) ? '' : 'none';
-  document.getElementById('obj-edit-btn').style.display = 'none'; // lock during run
+  document.getElementById('obj-edit-btn').style.display = 'none';
+
+  // Wake Lock — garde l'écran allumé pendant la course
+  acquireWakeLock();
 }
 function pauseRun() {
   if (!isPaused) { isPaused = true; pauseStart = Date.now(); }
@@ -773,6 +781,7 @@ function pauseRun() {
 function stopRun() {
   if (!isRunning) return;
   clearInterval(timerInterval); stopGPS();
+  releaseWakeLock();
   const elapsed = getElapsed();
   const distKm = (totalDistance / 1000).toFixed(2);
   const pace   = calcPace(totalDistance, elapsed);
@@ -991,8 +1000,30 @@ function refreshHome() {
 }
 
 // ─────────────────────────────── HISTORY ──────────────────────────────
-// ─────────────────────────────── HISTORY ──────────────────────────────
-let currentWeekOffset = 0; // 0 = cette semaine, -1 = semaine précédente, etc.
+// ─────────────────────────────── WAKE LOCK ────────────────────────────
+async function acquireWakeLock() {
+  if (!('wakeLock' in navigator)) { showWakeLockWarning(); return; }
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release', () => { if (isRunning) showWakeLockWarning(); });
+    hideWakeLockWarning();
+    document.addEventListener('visibilitychange', reacquireWakeLock);
+  } catch(e) { showWakeLockWarning(); }
+}
+async function reacquireWakeLock() {
+  if (document.visibilityState === 'visible' && isRunning && !isPaused) {
+    try { wakeLock = await navigator.wakeLock.request('screen'); hideWakeLockWarning(); } catch(e) {}
+  }
+}
+function releaseWakeLock() {
+  if (wakeLock) { wakeLock.release(); wakeLock = null; }
+  document.removeEventListener('visibilitychange', reacquireWakeLock);
+  hideWakeLockWarning();
+}
+function showWakeLockWarning() { document.getElementById('wakelock-warning').style.display = 'flex'; }
+function hideWakeLockWarning() { document.getElementById('wakelock-warning').style.display = 'none'; }
+
+// ─────────────────────────────── HISTORY (week nav) ─────────────────── // 0 = cette semaine, -1 = semaine précédente, etc.
 
 function getWeekBounds(offset) {
   const now = new Date();
