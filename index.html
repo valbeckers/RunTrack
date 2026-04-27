@@ -137,6 +137,13 @@
     .metric .m-val { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 1px; color: var(--text); line-height: 1; }
     .metric .m-unit { font-size: 10px; color: var(--muted); margin-top: 1px; }
 
+    /* Métriques agrandies pendant une course running active */
+    .metrics-row.run-active { grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+    .metrics-row.run-active .metric { padding: 20px 12px; border-radius: 18px; }
+    .metrics-row.run-active .metric .m-label { font-size: 11px; letter-spacing: 2px; margin-bottom: 8px; }
+    .metrics-row.run-active .metric .m-val { font-size: 64px; letter-spacing: 2px; }
+    .metrics-row.run-active .metric .m-unit { font-size: 13px; margin-top: 4px; }
+
     /* Objective bar */
     .obj-bar { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; }
     .obj-bar-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
@@ -683,6 +690,7 @@ let paceHistory = [];
 
 // History filter
 let histFilter = 'all';
+let currentWeekOffset = 0;
 
 // ─────────────────────────────── NAV ──────────────────────────────────
 function showScreen(name) {
@@ -712,6 +720,18 @@ function hasObj() { return obj.pace || obj.dist || obj.time; }
 
 // ─────────────────────────────── MAP ──────────────────────────────────
 function initMap() {
+  if (typeof L === 'undefined') {
+    // Leaflet pas encore chargé — recharge le script dynamiquement
+    const s = document.createElement('script');
+    s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    s.onload = () => _doInitMap();
+    s.onerror = () => setGpsStatus('bad', 'Carte indisponible (réseau)');
+    document.head.appendChild(s);
+    return;
+  }
+  _doInitMap();
+}
+function _doInitMap() {
   map = L.map('map', { zoomControl:false }).setView([48.85, 2.35], 15);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution:'© OSM © CARTO', maxZoom:19 }).addTo(map);
   routeLine = L.polyline([], { color: activeMode==='hike' ? '#4cd9a0' : '#e8ff47', weight:4, opacity:.9 }).addTo(map);
@@ -770,6 +790,11 @@ function startRun() {
   document.getElementById('obj-bar').style.display = (activeMode==='run' && hasObj()) ? '' : 'none';
   document.getElementById('obj-edit-btn').style.display = 'none';
 
+  // Agrandit les métriques en mode running
+  if (activeMode === 'run') {
+    document.querySelector('.metrics-row').classList.add('run-active');
+  }
+
   // Wake Lock — garde l'écran allumé pendant la course
   acquireWakeLock();
 }
@@ -810,14 +835,21 @@ function resetRunState() {
   isRunning = false; isPaused = false;
   totalDistance = 0; lastPos = null; elevGain = 0; lastAlt = null;
   if (routeLine) routeLine.setLatLngs([]);
-  ['timer-display','metric-dist','metric-pace','metric-speed','metric-elev','metric-alt'].forEach(id => {
+  document.querySelector('.metrics-row').classList.remove('run-active');
+
+  // Réinitialise uniquement les éléments qui existent
+  const resetVals = {
+    'timer-display': '00:00:00',
+    'metric-dist':   '0.00',
+    'metric-pace':   '--:--',
+    'metric-elev':   '0',
+    'metric-alt':    '--',
+  };
+  Object.entries(resetVals).forEach(([id, val]) => {
     const el = document.getElementById(id);
-    if (id === 'timer-display') el.textContent = '00:00:00';
-    else if (id === 'metric-dist') el.textContent = '0.00';
-    else if (['metric-pace','metric-alt'].includes(id)) el.textContent = '--:--';
-    else el.textContent = '0';
+    if (el) el.textContent = val;
   });
-  document.getElementById('metric-alt').textContent = '--';
+
   document.getElementById('m-pace').className = 'metric';
   document.getElementById('progress-wrap').style.display = 'none';
   document.getElementById('obj-setup-btn').style.display = activeMode==='run' ? 'flex' : 'none';
