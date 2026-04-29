@@ -229,7 +229,7 @@
     .h-mode.hike { color: var(--hike); }
     .h-dist { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 1px; }
     .h-del { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 18px; padding: 4px; }
-    .history-run-details { display: flex; gap: 20px; flex-wrap: wrap; }
+    .history-run-details { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; }
     .hd-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 2px; }
     .hd-val { font-family: 'DM Mono', monospace; font-size: 14px; }
 
@@ -454,6 +454,15 @@
         </div>
       </div>
 
+      <!-- Calories — même taille que les autres métriques, centrée -->
+      <div style="display:flex;justify-content:center;margin-bottom:10px;">
+        <div class="metric" id="m-kcal" style="width:50%;text-align:center;">
+          <div class="m-label">🔥 Calories</div>
+          <div class="m-val" id="metric-kcal">0</div>
+          <div class="m-unit">kcal</div>
+        </div>
+      </div>
+
       <!-- Hike extras -->
       <div class="hike-metrics" id="hike-extras" style="display:none">
         <div class="hike-metric">
@@ -513,6 +522,14 @@
   <div class="modal">
     <button class="settings-close" onclick="closeModal('settings-modal')">✕</button>
     <h3>RÉGLAGES</h3>
+    <div class="settings-item" onclick="openProfile()">
+      <div class="si-icon" style="background:#1a0a1a">👤</div>
+      <div class="si-text">
+        <div class="si-title">Mon profil</div>
+        <div class="si-desc">Sexe, âge, poids, taille — pour les calories</div>
+      </div>
+      <div class="si-arrow">›</div>
+    </div>
     <div class="settings-item" onclick="exportData()">
       <div class="si-icon export">📤</div>
       <div class="si-text">
@@ -536,6 +553,41 @@
         <div class="si-desc">Vide le cache et recharge l'app</div>
       </div>
       <div class="si-arrow">›</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ PROFILE MODAL ════════════════ -->
+<div class="modal-overlay" id="profile-modal">
+  <div class="modal">
+    <h3>MON PROFIL</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Utilisé pour calculer les calories brûlées.</p>
+
+    <div class="obj-section-title">Sexe</div>
+    <div class="obj-toggle-row" style="margin-bottom:16px">
+      <button class="obj-toggle" id="prof-male"   onclick="setProfileSex('M')">👨 Homme</button>
+      <button class="obj-toggle" id="prof-female" onclick="setProfileSex('F')">👩 Femme</button>
+    </div>
+
+    <div class="input-row">
+      <label>Âge</label>
+      <input type="number" id="prof-age" min="10" max="99" inputmode="numeric" placeholder="31" />
+      <span style="color:var(--muted);font-size:13px">ans</span>
+    </div>
+    <div class="input-row">
+      <label>Poids</label>
+      <input type="number" id="prof-weight" min="30" max="250" inputmode="decimal" placeholder="95" />
+      <span style="color:var(--muted);font-size:13px">kg</span>
+    </div>
+    <div class="input-row">
+      <label>Taille</label>
+      <input type="number" id="prof-height" min="100" max="250" inputmode="numeric" placeholder="182" />
+      <span style="color:var(--muted);font-size:13px">cm</span>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeModal('profile-modal')">ANNULER</button>
+      <button class="btn-modal-ok" onclick="saveProfile()">SAUVEGARDER</button>
     </div>
   </div>
 </div>
@@ -692,6 +744,14 @@ let paceHistory = [];
 let histFilter = 'all';
 let currentWeekOffset = 0;
 
+// Profil utilisateur (défaut = tes valeurs)
+let profile = JSON.parse(localStorage.getItem('runtrack_profile') || 'null') || {
+  sex: 'M', age: 31, weight: 95, height: 182
+};
+
+// Calories
+let totalKcal = 0;
+
 // ─────────────────────────────── NAV ──────────────────────────────────
 function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -782,7 +842,7 @@ function startRun() {
   isRunning = true; isPaused = false;
   startTime = Date.now(); pausedElapsed = 0;
   totalDistance = 0; lastPos = null; elevGain = 0; lastAlt = null;
-  paceHistory = []; currentSpeed = 0;
+  paceHistory = []; currentSpeed = 0; totalKcal = 0;
   if (routeLine) routeLine.setLatLngs([]);
   timerInterval = setInterval(tick, 500);
   startGPS(); renderBtns();
@@ -816,6 +876,7 @@ function stopRun() {
     { label:'Durée',    val: formatTime(elapsed) },
     ...(activeMode==='run' ? [{ label:'Allure moy.', val: pace + ' /km' }] : []),
     ...(activeMode==='hike' && elevGain ? [{ label:'Dénivelé +', val: Math.round(elevGain) + ' m' }] : []),
+    { label:'🔥 Calories', val: Math.round(totalKcal) + ' kcal' },
   ];
   document.getElementById('save-modal-title').textContent = icon + ' SAUVEGARDER ?';
   document.getElementById('save-modal-stats').innerHTML = items.map(s =>
@@ -826,7 +887,7 @@ function stopRun() {
 function saveRun() {
   const elapsed = getElapsed();
   const runs = getRuns();
-  runs.unshift({ date: new Date().toISOString(), mode: activeMode, distance: totalDistance, duration: elapsed, pace: calcPaceValue(totalDistance, elapsed), elevGain: Math.round(elevGain) });
+  runs.unshift({ date: new Date().toISOString(), mode: activeMode, distance: totalDistance, duration: elapsed, pace: calcPaceValue(totalDistance, elapsed), elevGain: Math.round(elevGain), kcal: Math.round(totalKcal) });
   localStorage.setItem('runtrack_runs', JSON.stringify(runs));
   closeModal('save-modal'); resetRunState(); showScreen('home');
 }
@@ -842,6 +903,7 @@ function resetRunState() {
     'timer-display': '00:00:00',
     'metric-dist':   '0.00',
     'metric-pace':   '--:--',
+    'metric-kcal':   '0',
     'metric-elev':   '0',
     'metric-alt':    '--',
   };
@@ -874,6 +936,7 @@ function tick() {
   if (isPaused) return;
   document.getElementById('timer-display').textContent = formatTime(getElapsed());
   updateMetrics();
+  updateCalories();
   if (activeMode === 'run') { checkPaceAlert(); updateProgress(); }
 }
 function getElapsed() {
@@ -884,6 +947,25 @@ function getElapsed() {
 function updateMetrics() {
   document.getElementById('metric-dist').textContent = (totalDistance/1000).toFixed(2);
   document.getElementById('metric-pace').textContent = calcPace(totalDistance, getElapsed());
+}
+
+function updateCalories() {
+  if (!isRunning || isPaused) return;
+  // MET basé sur l'allure actuelle
+  const paceVal = calcPaceValue(totalDistance, getElapsed()); // min/km
+  let MET;
+  if (!paceVal || paceVal > 10)      MET = activeMode === 'hike' ? 5.5 : 6.0;  // marche/rando
+  else if (paceVal > 7.5)            MET = 8.0;   // ~8 km/h
+  else if (paceVal > 6.0)            MET = 10.0;  // ~10 km/h
+  else if (paceVal > 5.0)            MET = 11.5;  // ~12 km/h
+  else if (paceVal > 4.0)            MET = 13.0;  // ~15 km/h
+  else                               MET = 14.5;  // >15 km/h
+
+  // Calories/min = MET × poids × 3.5 / 200
+  const calsPerMin = MET * profile.weight * 3.5 / 200;
+  totalKcal = calsPerMin * (getElapsed() / 60000);
+  const el = document.getElementById('metric-kcal');
+  if (el) el.textContent = Math.round(totalKcal);
 }
 
 // ─────────────────────────────── OBJECTIVES ───────────────────────────
@@ -1032,6 +1114,29 @@ function refreshHome() {
 }
 
 // ─────────────────────────────── HISTORY ──────────────────────────────
+// ─────────────────────────────── PROFIL ───────────────────────────────
+function openProfile() {
+  closeModal('settings-modal');
+  document.getElementById('prof-age').value    = profile.age;
+  document.getElementById('prof-weight').value = profile.weight;
+  document.getElementById('prof-height').value = profile.height;
+  setProfileSex(profile.sex);
+  document.getElementById('profile-modal').classList.add('open');
+}
+function setProfileSex(s) {
+  profile.sex = s;
+  document.getElementById('prof-male').className   = 'obj-toggle' + (s==='M' ? ' on' : '');
+  document.getElementById('prof-female').className = 'obj-toggle' + (s==='F' ? ' on' : '');
+}
+function saveProfile() {
+  profile.age    = parseInt(document.getElementById('prof-age').value)    || profile.age;
+  profile.weight = parseFloat(document.getElementById('prof-weight').value) || profile.weight;
+  profile.height = parseInt(document.getElementById('prof-height').value) || profile.height;
+  localStorage.setItem('runtrack_profile', JSON.stringify(profile));
+  closeModal('profile-modal');
+  showNotif('✅ Profil sauvegardé');
+}
+
 // ─────────────────────────────── WAKE LOCK ────────────────────────────
 async function acquireWakeLock() {
   if (!('wakeLock' in navigator)) { showWakeLockWarning(); return; }
@@ -1125,11 +1230,6 @@ function refreshHistory() {
     const km   = (r.distance/1000).toFixed(2);
     const pace = r.mode==='run' && r.pace ? paceStr(r.pace) : null;
     const icon = r.mode==='hike' ? '🥾' : '🏃';
-    const details = [
-      `<div class="hd"><div class="hd-label">Durée</div><div class="hd-val">${formatTime(r.duration)}</div></div>`,
-      pace ? `<div class="hd"><div class="hd-label">Allure</div><div class="hd-val">${pace} /km</div></div>` : '',
-      r.elevGain ? `<div class="hd"><div class="hd-label">D+</div><div class="hd-val">${r.elevGain} m</div></div>` : '',
-    ].join('');
     return `<div class="history-run ${r.mode==='hike'?'is-hike':''}">
       <div class="history-run-header">
         <div>
@@ -1139,7 +1239,12 @@ function refreshHistory() {
         </div>
         <button class="h-del" onclick="confirmDelete(${r._i})">✕</button>
       </div>
-      <div class="history-run-details">${details}</div>
+      <div class="history-run-details">
+        <div class="hd"><div class="hd-label">⏱️ Durée</div><div class="hd-val">${formatTime(r.duration)}</div></div>
+        ${pace ? `<div class="hd"><div class="hd-label">⚡ Allure</div><div class="hd-val">${pace} /km</div></div>` : `<div class="hd"><div class="hd-label">⚡ Allure</div><div class="hd-val">--:--</div></div>`}
+        <div class="hd"><div class="hd-label">🔥 Calories</div><div class="hd-val">${r.kcal ? r.kcal + ' kcal' : '--'}</div></div>
+        ${r.elevGain ? `<div class="hd"><div class="hd-label">D+</div><div class="hd-val">${r.elevGain} m</div></div>` : ''}
+      </div>
     </div>`;
   }).join('');
 }
