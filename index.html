@@ -143,21 +143,8 @@
     .metrics-row.run-active .metric .m-unit { font-size: 13px; margin-top: 4px; }
 
     /* Objective bar */
-    .obj-bar { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; }
-    .obj-bar-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .obj-bar-top .obj-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); }
-    .obj-bar-top .obj-edit-btn { background: none; border: none; color: var(--accent); font-size: 11px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 500; }
-    .obj-chips { display: flex; gap: 8px; flex-wrap: wrap; }
-    .obj-chip { display: flex; flex-direction: column; background: #1a1d0a; border: 1px solid var(--accent); border-radius: 10px; padding: 6px 12px; min-width: 80px; }
-    .obj-chip .oc-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 2px; }
-    .obj-chip .oc-val { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; }
 
     /* Progress bar */
-    .progress-wrap { margin-bottom: 10px; }
-    .progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
-    .progress-track { height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; }
-    .progress-fill { height: 100%; border-radius: 99px; background: var(--accent); transition: width .5s; }
-    .progress-fill.hike-fill { background: var(--hike); }
 
     /* Hike extras */
     .hike-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
@@ -173,8 +160,6 @@
     .btn-start-hike { background: var(--hike);   color: #0a0a0f; }
     .btn-pause { background: var(--accent2); color: white; }
     .btn-stop  { background: var(--red);    color: white; max-width: 72px; }
-
-    .obj-setup-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; color: var(--accent); font-size: 13px; font-weight: 500; cursor: pointer; margin-bottom: 10px; width: 100%; text-align: left; font-family: 'DM Sans', sans-serif; display: flex; align-items: center; gap: 8px; }
 
     /* WEEK NAVIGATION */
     .week-nav { display: flex; align-items: center; justify-content: space-between; padding: 0 16px 12px; gap: 8px; }
@@ -236,12 +221,6 @@
     .modal-overlay.open { display: flex; }
     .modal { background: var(--surface); border-radius: 24px 24px 0 0; width: 100%; border-top: 1px solid var(--border); padding: 24px 20px 24px; max-height: 90dvh; overflow-y: auto; }
     .modal h3 { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 2px; margin-bottom: 16px; color: var(--accent); }
-
-    .obj-section { margin-bottom: 16px; }
-    .obj-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 10px; }
-    .obj-toggle-row { display: flex; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
-    .obj-toggle { padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border); background: none; color: var(--muted); font-size: 13px; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all .15s; }
-    .obj-toggle.on { border-color: var(--accent); background: #1a1d0a; color: var(--accent); }
 
     .input-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
     .input-row label { font-size: 13px; color: var(--muted); min-width: 70px; }
@@ -401,24 +380,6 @@
         <div class="t-val" id="timer-display">00:00:00</div>
       </div>
 
-      <!-- Objectives bar -->
-      <div class="obj-bar" id="obj-bar" style="display:none">
-        <div class="obj-bar-top">
-          <span class="obj-title">Objectifs actifs</span>
-          <button class="obj-edit-btn" id="obj-edit-btn" onclick="openObjModal()">Modifier</button>
-        </div>
-        <div class="obj-chips" id="obj-chips"></div>
-      </div>
-
-      <!-- Progress bar -->
-      <div class="progress-wrap" id="progress-wrap" style="display:none">
-        <div class="progress-label">
-          <span id="prog-left">Progression</span>
-          <span id="prog-right">0%</span>
-        </div>
-        <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
-      </div>
-
       <!-- Metrics — Distance + Allure uniquement -->
       <div class="metrics-row" style="grid-template-columns: 1fr 1fr;">
         <div class="metric" id="m-dist">
@@ -455,14 +416,6 @@
           <div class="hm-unit">m</div>
         </div>
       </div>
-
-      <!-- Objective setup button -->
-      <button class="obj-setup-btn" id="obj-setup-btn" onclick="openObjModal()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
-        </svg>
-        Définir un objectif de course
-      </button>
 
       <div class="btn-row" id="btn-row"></div>
     </div>
@@ -623,50 +576,6 @@
   </button>
 </nav>
 
-<!-- ════════════════ OBJECTIVE MODAL ════════════════ -->
-<div class="modal-overlay" id="obj-modal">
-  <div class="modal">
-    <h3>OBJECTIFS DE COURSE</h3>
-
-    <div class="obj-section">
-      <div class="obj-section-title">Activer un ou plusieurs objectifs</div>
-      <div class="obj-toggle-row">
-        <button class="obj-toggle" id="ot-dist" onclick="toggleObjType('dist')">📏 Distance</button>
-        <button class="obj-toggle" id="ot-time" onclick="toggleObjType('time')">⏱️ Durée</button>
-      </div>
-    </div>
-
-    <div id="obj-dist-section" style="display:none">
-      <div class="obj-section">
-        <div class="obj-section-title">Distance cible (km)</div>
-        <div class="input-row">
-          <label>Km</label>
-          <input type="number" id="inp-dist" min="0.5" max="200" step="0.5" placeholder="10" inputmode="decimal" />
-        </div>
-      </div>
-    </div>
-
-    <div id="obj-time-section" style="display:none">
-      <div class="obj-section">
-        <div class="obj-section-title">Durée cible</div>
-        <div class="input-row">
-          <label>Heures</label>
-          <input type="number" id="inp-time-h" min="0" max="24" placeholder="0" inputmode="numeric" />
-        </div>
-        <div class="input-row">
-          <label>Minutes</label>
-          <input type="number" id="inp-time-m" min="0" max="59" placeholder="30" inputmode="numeric" />
-        </div>
-      </div>
-    </div>
-
-    <div class="modal-actions">
-      <button class="btn-modal-cancel" onclick="closeModal('obj-modal')">ANNULER</button>
-      <button class="btn-modal-ok"     onclick="saveObjectives()">VALIDER</button>
-    </div>
-  </div>
-</div>
-
 <!-- ════════════════ SAVE MODAL ════════════════ -->
 <div class="modal-overlay" id="save-modal">
   <div class="modal">
@@ -691,14 +600,6 @@ let elevGain = 0, lastAlt = null;
 let activeMode = 'run';
 let wakeLock = null; // Wake Lock API pour garder l'écran allumé
 
-// Objectives
-let obj = { dist:false, distTarget:null, time:false, timeTarget:null };
-let tmpObjTypes = new Set();
-
-// History filter
-let histFilter = 'all';
-let currentWeekOffset = 0;
-
 // Profil utilisateur (défaut = tes valeurs)
 let profile = JSON.parse(localStorage.getItem('runtrack_profile') || 'null') || {
   sex: 'M', age: 31, weight: 95, height: 182
@@ -706,6 +607,10 @@ let profile = JSON.parse(localStorage.getItem('runtrack_profile') || 'null') || 
 
 // Calories
 let totalKcal = 0;
+
+// History
+let histFilter = 'all';
+let currentWeekOffset = 0;
 
 // ─────────────────────────────── NAV ──────────────────────────────────
 function showScreen(name) {
@@ -724,14 +629,10 @@ function setMode(m) {
   activeMode = m;
   document.getElementById('mode-run-btn').className  = 'mode-btn' + (m==='run'  ? ' active-run'  : '');
   document.getElementById('mode-hike-btn').className = 'mode-btn' + (m==='hike' ? ' active-hike' : '');
-  document.getElementById('obj-setup-btn').style.display = m === 'run' ? 'flex' : 'none';
-  document.getElementById('hike-extras').style.display   = m === 'hike' ? 'grid' : 'none';
-  document.getElementById('obj-bar').style.display = (m === 'run' && hasObj()) ? '' : 'none';
-  document.getElementById('progress-wrap').style.display = 'none';
+  document.getElementById('hike-extras').style.display = m === 'hike' ? 'grid' : 'none';
   if (routeLine) routeLine.setStyle({ color: m === 'hike' ? '#4cd9a0' : '#e8ff47' });
   renderBtns();
 }
-function hasObj() { return obj.dist || obj.time; }
 
 // ─────────────────────────────── MAP ──────────────────────────────────
 function initMap() {
@@ -801,9 +702,6 @@ function startRun() {
   if (routeLine) routeLine.setLatLngs([]);
   timerInterval = setInterval(tick, 500);
   startGPS(); renderBtns();
-  document.getElementById('obj-setup-btn').style.display = 'none';
-  document.getElementById('obj-bar').style.display = (activeMode==='run' && hasObj()) ? '' : 'none';
-  document.getElementById('obj-edit-btn').style.display = 'none';
 
   // Agrandit les métriques en mode running
   if (activeMode === 'run') {
@@ -874,10 +772,6 @@ function resetRunState() {
   });
 
   document.getElementById('m-pace').className = 'metric';
-  document.getElementById('progress-wrap').style.display = 'none';
-  document.getElementById('obj-setup-btn').style.display = activeMode==='run' ? 'flex' : 'none';
-  document.getElementById('obj-bar').style.display = (hasObj() && activeMode==='run') ? '' : 'none';
-  document.getElementById('obj-edit-btn').style.display = '';
   renderBtns();
 }
 function renderBtns() {
@@ -898,7 +792,6 @@ function tick() {
   document.getElementById('timer-display').textContent = formatTime(getElapsed());
   updateMetrics();
   updateCalories();
-  if (activeMode === 'run') { updateProgress(); }
 }
 function getElapsed() {
   let e = Date.now() - startTime - pausedElapsed;
@@ -927,63 +820,6 @@ function updateCalories() {
   totalKcal = calsPerMin * (getElapsed() / 60000);
   const el = document.getElementById('metric-kcal');
   if (el) el.textContent = Math.round(totalKcal);
-}
-
-// ─────────────────────────────── OBJECTIVES ───────────────────────────
-function openObjModal() {
-  tmpObjTypes = new Set([...(obj.dist?['dist']:[]),...(obj.time?['time']:[])]);
-  if (obj.distTarget) document.getElementById('inp-dist').value = obj.distTarget;
-  if (obj.timeTarget) {
-    const tm = obj.timeTarget / 60000;
-    document.getElementById('inp-time-h').value = Math.floor(tm / 60);
-    document.getElementById('inp-time-m').value = Math.round(tm % 60);
-  }
-  renderObjModal();
-  document.getElementById('obj-modal').classList.add('open');
-}
-function renderObjModal() {
-  ['dist','time'].forEach(t => {
-    document.getElementById('ot-' + t).className = 'obj-toggle' + (tmpObjTypes.has(t) ? ' on' : '');
-    document.getElementById('obj-' + t + '-section').style.display = tmpObjTypes.has(t) ? '' : 'none';
-  });
-}
-function saveObjectives() {
-  obj.dist = tmpObjTypes.has('dist');
-  obj.time = tmpObjTypes.has('time');
-  if (obj.dist) { obj.distTarget = parseFloat(document.getElementById('inp-dist').value)||null; }
-  if (obj.time) { const h=parseInt(document.getElementById('inp-time-h').value)||0; const m=parseInt(document.getElementById('inp-time-m').value)||0; obj.timeTarget = (h*60+m)*60000; }
-  closeModal('obj-modal');
-  renderObjChips();
-  document.getElementById('obj-bar').style.display = hasObj() ? '' : 'none';
-  document.getElementById('obj-setup-btn').style.display = hasObj() ? 'none' : 'flex';
-}
-function renderObjChips() {
-  const chips = document.getElementById('obj-chips');
-  let html = '';
-  if (obj.dist && obj.distTarget) { html += `<div class="obj-chip"><div class="oc-label">Distance</div><div class="oc-val">${obj.distTarget} km</div></div>`; }
-  if (obj.time && obj.timeTarget) { html += `<div class="obj-chip"><div class="oc-label">Durée</div><div class="oc-val">${formatTime(obj.timeTarget)}</div></div>`; }
-  chips.innerHTML = html || '<span style="color:var(--muted);font-size:13px">Aucun objectif actif</span>';
-}
-
-// ─────────────────────────────── PROGRESS ─────────────────────────────
-function updateProgress() {
-  if (!isRunning) return;
-  let pct = 0, left = '', right = '';
-  if (obj.dist && obj.distTarget) {
-    pct = Math.min(100, (totalDistance/1000) / obj.distTarget * 100);
-    const rem = Math.max(0, obj.distTarget - totalDistance/1000).toFixed(2);
-    left = `${(totalDistance/1000).toFixed(2)} / ${obj.distTarget} km`;
-    right = `−${rem} km`;
-  } else if (obj.time && obj.timeTarget) {
-    pct = Math.min(100, getElapsed() / obj.timeTarget * 100);
-    const rem = Math.max(0, obj.timeTarget - getElapsed());
-    left = `${formatTime(getElapsed())} / ${formatTime(obj.timeTarget)}`;
-    right = `−${formatTime(rem)}`;
-  } else return;
-  document.getElementById('progress-wrap').style.display = '';
-  document.getElementById('progress-fill').style.width = pct + '%';
-  document.getElementById('prog-left').textContent  = left;
-  document.getElementById('prog-right').textContent = right;
 }
 
 // ─────────────────────────────── HOME ─────────────────────────────────
